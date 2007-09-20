@@ -18,7 +18,7 @@ close(FP_LOG_PATH);
 
 my @arrLogDirs;
 for(my $i = 0; $i < @arrLogDirsTmp; $i++) {
-	if ($arrLogDirsTmp[$i] =~ m/xword_to_ip_.*/) {
+	if ($arrLogDirsTmp[$i] =~ m/aaword_to_ip_.*/) {
 		push(@arrLogDirs, $arrLogDirsTmp[$i]);
 	}
 }
@@ -54,8 +54,6 @@ for(my $i = 0; $i < @arrLogDirs; $i++) {
 
 		my @arrWordLine		= split("\t", $strLine);
 		my $strWord		= $arrWordLine[0];	# 关键词是 abc
-	#	$strWord		=~ s/^\[//;
-	#	$strWord		=~ s/\]$//;
 
 		$strWord		= trim_b($strWord);
 
@@ -83,8 +81,6 @@ for(my $i = 0; $i < @arrLogDirs; $i++) {
 
 	statWordIPHash(\%hashWordIP, $i);
 
-#	print	"ok\n";
-
 	close(FH_WORDFILE);
 }
 
@@ -98,7 +94,6 @@ sub statWordIPHash {
 	my $intOrder	= shift(@_);
 
 	my $intWordCount	= 0;
-#	my $startAt		= date("H:i:s");
 
 #	hash_dump_r(\%hashObj);exit;
 
@@ -150,7 +145,7 @@ sub statWordIPHash {
 
 
 			#	print "line:\t$strLine \n";
-			#	print "merge file:\t $strWord\t$strWordStatFile\n";
+				print "merge file:\t$strWord\t$strWordStatFile\n";
 
 				my ($strType, $intReadLine)	= split("\t", $strLine);
 				$strType			= trim_b($strType);
@@ -172,11 +167,6 @@ sub statWordIPHash {
 			}
 
 		#	hash_dump_r(\%hashTotal);
-			if ($strWord eq '126') {
-				print	"===========\n";
-				hash_dump_r(\%hashTotal);
-			}
-
 			close(FH_STAT);
 			unlink	$strWordStatFile;
 
@@ -188,7 +178,6 @@ sub statWordIPHash {
 		open(FH_STAT, ">$strWordStatFile") or die "Failed to write stat file! [$strWordStatFile]";
 
 		# 分析每一个 IP 的位置，写入 %hashTotal
-
 		foreach $strIPAddr (keys %{$hashObj{$strWord}}) {
 
 			my %resFind	= findIPLocation(\%hashSearhMap, $strIPAddr);
@@ -228,23 +217,12 @@ sub statWordIPHash {
 		$strFileContent		.= "[city]\t$intCityCount\n$strCityContent";
 
 		print	FH_STAT $strFileContent;
-
 		close(FH_STAT);
-
-		if ($strWord eq '126') {
-		#	print	"===========\n";
-		#	hash_dump_r(\%hashTotal);
-		}
-
 
 #		print	"$strWord [$strWordStatFile]\n\n\n";
 
 
 	}
 
-#	my $finishAt	= date("H:i:s");
-
-
 	return	1;
-
 }
