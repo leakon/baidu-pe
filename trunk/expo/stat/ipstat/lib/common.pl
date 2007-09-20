@@ -7,6 +7,13 @@ sub trim {
 	return		$string;
 }
 
+sub trim_b {
+	my $string	= shift(@_);
+	$string		=~ s/^\[//;
+	$string		=~ s/\]$//;
+	return		$string;
+}
+
 sub parseConfigLine {
 	my $line	= shift(@_);
 	$line		=~ s/#.*$//;
@@ -111,10 +118,10 @@ sub hash_dump_r {
 			my %hashSub	= %{$hashObj{$key}};
 			my $subIndent	= $strIndent . "\t";
 
-			print $strIndent . "\%" . $key . "\t=>\n";
+			print $strIndent . "\% " . $key . "\t=>\n";
 			hash_dump_r(\%hashSub, $subIndent);
 		} else {
-			print $strIndent . "\$" . $key, "\t= " . $hashObj{$key} . "\n";
+			print $strIndent . "\$ " . $key, "\t= " . $hashObj{$key} . "\n";
 		}
 
 	}
@@ -166,5 +173,44 @@ sub hash_to_file {
 	return 1;
 }
 
+
+
+# 创建文件或目录
+# path/to/dir/	创建 dir 目录
+# path/to/file	创建 file 文件
+# 是文件还是目录，关键在于最后一位是不是 /
+sub touchFile {
+	my ($strFilePath, $strRoot)	= @_;
+	my @arrDirs			= split("\/", $strFilePath);
+	my $strTouchFile		= $strRoot;
+	my $intCount			= 0;
+
+	my $strLastChar			= substr($strFilePath, -1, 1);
+
+#	print	$strLastChar;
+
+	my $intIsFile			= 1;
+	if ($strLastChar eq "/") {
+		$intIsFile	= 0;
+	}
+
+	# 如果是文件，则跳过最后一个元素，因为此时 $intIsFile = 1
+	for(my $i = 0; $i < @arrDirs - $intIsFile; ++$i) {
+		$strTouchFile	.= "/" . $arrDirs[$i];
+		if (!(-d $strTouchFile)) {
+			mkdir($strTouchFile);
+			$intCount++;
+		}
+	}
+
+	if ($intIsFile) {
+		# 如果最后以 / 结尾，说明是目录，否则，是文件
+		$strTouchFile	.= "/" . $arrDirs[$#arrDirs];
+		if (!(-d $strTouchFile)) {
+			`touch $strTouchFile`;
+		}
+	}
+	return	$intCount;
+}
 
 1;

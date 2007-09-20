@@ -159,10 +159,10 @@ sub buildSearchMap {
 			"c"		=> $hashLine{"c"}
 		);
 
-		if ('61.177.0.0' eq $strIPBegin) {
-			print $strLine . "\n";
-			hash_dump(\%hashNode);
-		}
+#		if ('61.177.0.0' eq $strIPBegin) {
+#			print $strLine . "\n";
+#			hash_dump(\%hashNode);
+#		}
 
 		if ($intIPLength >= 16777216) {
 			# 无效区间
@@ -325,6 +325,28 @@ sub findSameBeginIP {
 }
 
 
+# 根据 关键词 确定保存路径
+sub getWordStatFile {
 
+	my $strWord		= trim(shift(@_));
+	my $strMD5		= md5_hex($strWord);
+
+	my $strLevelFirst	= substr($strMD5, 0, 2);
+	my $strLevelSecond	= substr($strMD5, 2, 2);
+
+	my $intLevelFirst	= hex($strLevelFirst);
+	my $intLevelSecond	= hex($strLevelSecond);
+
+	# 临时测试，不要太散
+	$intLevelFirst	= '0';
+#	$intLevelSecond	= $intLevelSecond % 100;
+	$intLevelSecond	= '0';
+
+	my $strIPDataFile	= $intLevelFirst . "/" . $intLevelSecond . "/" .$strMD5 . ".txt";
+
+#	print	$strWord . "\t=> " . $strMD5 . "\t" . $strIPDataFile . "\n";
+
+	return	$strIPDataFile;
+}
 
 1;
