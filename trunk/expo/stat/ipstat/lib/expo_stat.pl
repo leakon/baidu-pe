@@ -340,7 +340,7 @@ sub getWordStatFile {
 	# ÁÙÊ±²âÊÔ£¬²»ÒªÌ«É¢
 	$intLevelFirst	= '0';
 #	$intLevelSecond	= $intLevelSecond % 100;
-	$intLevelSecond	= '0';
+#	$intLevelSecond	= '0';
 
 	my $strIPDataFile	= $intLevelFirst . "/" . $intLevelSecond . "/" .$strMD5 . ".txt";
 
