@@ -153,7 +153,7 @@ sub buildSearchMap {
 			"begin"		=> $intIPBegin,
 			"end"		=> $intIPEnd,
 			"ip"		=> $strIPBegin,
-			"to"		=> $strIPEnd,
+		#	"to"		=> $strIPEnd,
 			"length"	=> $intIPLength,
 			"p"		=> $hashLine{"p"},
 			"c"		=> $hashLine{"c"}
@@ -347,6 +347,157 @@ sub getWordStatFile {
 #	print	$strWord . "\t=> " . $strMD5 . "\t" . $strIPDataFile . "\n";
 
 	return	$strIPDataFile;
+}
+
+
+
+# 下述函数留作备份，已不再使用
+
+sub statWordIPHashxxxx {
+
+	my %hashObj	= %{shift(@_)};
+	my $strDat	= date("Ymd", time - 86400);
+	my $strPath	= "ip_data/";
+
+	my $intOrder	= shift(@_);
+
+	my $intWordCount	= 0;
+
+#	hash_dump_r(\%hashObj);exit;
+
+	foreach my $strWord (keys %hashObj) {
+
+		$intWordCount++;
+		if (($intWordCount % 100) == 0) {
+			print date("H:i:s") . "\t" . $intOrder . ":\t" . $intWordCount . "\n";
+		}
+
+		my %hashTotal;
+
+		my $strWordStatFile	= getWordStatFile($strWord);
+		$strWordStatFile	= $strPath . $strDat . "/" . $strWordStatFile;
+
+	#	print "[$strWord $strLine] \n";
+
+
+		#	文件格式
+		#	[Province]	2
+		#	3	19
+		#	4	14
+		#	[City]	3
+		#	7	18
+		#	23	15
+		#	17	13
+
+		if (0 && -e $strWordStatFile) {
+			# 如果文件已经存在，则要预先装载文件里的内容
+
+			open(FH_STAT, "<$strWordStatFile") or die "Failed to read stat file! [$strWordStatFile]";
+
+			# 第一行是关键词
+			my $strWordOfFile	= <FH_STAT>;
+			$strWordOfFile		= trim($strWordOfFile);
+			if (!($strWordOfFile eq $strWord)) {
+			#	print "[$strWordOfFile :: $strWord] \n";
+				# 关键词不匹配，跳过
+				next;
+			}
+
+
+			# 从第二行到最后一行是位置信息
+
+			while(!(eof FH_STAT)) {
+
+				my $strLine		= <FH_STAT>;
+				$strLine		= trim($strLine);
+
+
+			#	print "line:\t$strLine \n";
+				print "merge file:\t$strWord\t$strWordStatFile\n";
+
+				my ($strType, $intReadLine)	= split("\t", $strLine);
+				$strType			= trim_b($strType);
+
+			#	print "type: $strType\tlines: $intReadLine\n";
+
+				# 继续读取后 3 行
+				my @arrFewLines		= readFile(FH_STAT, $intReadLine);
+
+			#	array_dump(\@arrFewLines);
+
+				my %hashFewLines;
+				for(my $j = 0; $j < @arrFewLines; ++$j) {
+
+					# 每行拆成 2 个字段，地区代码 和 Count
+					my ($strCode, $intTotal, $intCount)	= split("\t", trim($arrFewLines[$j]));
+					$hashTotal{$strType}{$strCode}	= $intCount;
+				}
+			}
+
+		#	hash_dump_r(\%hashTotal);
+			close(FH_STAT);
+			unlink	$strWordStatFile;
+
+		} else {
+			# 创建目录
+#			touchFile($strWordStatFile, ".");
+		}
+
+#		open(FH_STAT, ">$strWordStatFile") or die "Failed to write stat file! [$strWordStatFile]";
+
+		# 分析每一个 IP 的位置，写入 %hashTotal
+		foreach $strIPAddr (keys %{$hashObj{$strWord}}) {
+
+			my %resFind	= findIPLocation(\%hashSearhMap, $strIPAddr);
+			if ($resFind{"p"}) {
+				$hashTotal{"province"}{$resFind{"p"}}	+= $hashObj{$strWord}{$strIPAddr};
+			}
+			if ($resFind{"c"}) {
+				$hashTotal{"city"}{$resFind{"c"}}	+= $hashObj{$strWord}{$strIPAddr};
+			}
+		#	print	"----$strIPAddr\n";
+		#	hash_dump(\%resFind);
+		#	print	"\n";
+		}
+
+#		print $strWord . " : \n";
+#		hash_dump_r(\%hashTotal);
+
+
+		my $strProvinceContent	= "";
+		my $strCityContent	= "";
+
+		my $intProvinceCount	= 0;
+		my $intCityCount	= 0;
+
+		my $intProvinceTotal	= 0;
+		my $intCityTotal	= 0;
+
+		foreach my $keyProvince (sort {$hashTotal{"province"}{$b} <=> $hashTotal{"province"}{$a}} keys %{$hashTotal{"province"}}) {
+			$strProvinceContent	.= $keyProvince . "\t" . $hashTotal{"province"}{$keyProvince} . "\n";
+			$intProvinceTotal	+= $hashTotal{"province"}{$keyProvince};
+			$intProvinceCount++;
+		}
+
+		foreach my $keyCity (sort {$hashTotal{"city"}{$b} <=> $hashTotal{"city"}{$a}} keys %{$hashTotal{"city"}}) {
+			$strCityContent	.= $keyCity . "\t" . $hashTotal{"city"}{$keyCity} . "\n";
+			$intCityTotal	+= $hashTotal{"city"}{$keyCity};
+			$intCityCount++;
+		}
+
+		my $strFileContent	= "$strWord\n";
+		$strFileContent		.= "[province]\t$intProvinceTotal\t$intProvinceCount\n$strProvinceContent";
+		$strFileContent		.= "[city]\t$intCityTotal\t$intCityCount\n$strCityContent";
+
+#		print	FH_STAT $strFileContent;
+#		close(FH_STAT);
+
+#		print	"$strWord [$strWordStatFile]\n\n\n";
+
+
+	}
+
+	return	1;
 }
 
 1;
